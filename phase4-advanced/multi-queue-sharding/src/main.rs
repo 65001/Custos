@@ -7,6 +7,8 @@
 #[cfg(target_os = "linux")]
 use clap::Parser;
 #[cfg(target_os = "linux")]
+use custos_common::OperationMode;
+#[cfg(target_os = "linux")]
 use custos_grpc_basic::ParseError;
 #[cfg(target_os = "linux")]
 use custos_multi_queue_sharding::{
@@ -84,9 +86,9 @@ struct Args {
     #[arg(short, long, default_value_t = 2048)]
     frame_count: u32,
 
-    /// Operation mode: "forward" (validate & forward) or "echo" (validate & swap MACs)
-    #[arg(short, long, default_value = "forward", value_parser = ["forward", "echo"])]
-    mode: String,
+    /// Packet processing mode.
+    #[arg(short, long, default_value_t = OperationMode::Forward)]
+    mode: OperationMode,
 
     /// Config file path (TOML) for validation rules
     #[arg(long)]
@@ -315,7 +317,7 @@ fn run_worker(
     core_id: usize,
     interface: String,
     frame_count: u32,
-    mode: String,
+    mode: OperationMode,
     shared_config: Arc<SharedConfig>,
     thread_stats: Arc<ThreadStats>,
     force_copy: bool,
@@ -431,7 +433,7 @@ fn run_worker(
 #[cfg(target_os = "linux")]
 fn run_packet_loop(
     queue_id: u32,
-    mode: String,
+    mode: OperationMode,
     verbose: bool,
     umem: Umem,
     mut rx_q: xsk_rs::RxQueue,
@@ -529,7 +531,7 @@ fn run_packet_loop(
                         }
 
                         // Echo mode: Swap MAC address in place
-                        if mode == "echo" {
+                        if mode == OperationMode::Echo {
                             // SAFETY: Modifying packet memory within bounds of the allocated UMEM frame descriptor.
                             let mut data_mut = unsafe { umem.data_mut(desc) };
                             let contents = data_mut.contents_mut();
