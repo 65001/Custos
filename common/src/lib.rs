@@ -12,6 +12,11 @@ pub use metrics::{
     ThreadStats,
 };
 
+#[cfg(target_os = "linux")]
+pub mod socket;
+#[cfg(target_os = "linux")]
+pub use socket::{build_socket_config, build_umem, populate_fill_queue};
+
 // ---------------------------------------------------------------------------
 // UMEM layout constants
 // ---------------------------------------------------------------------------
